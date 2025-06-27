@@ -25,41 +25,41 @@ selected_seasons = st.sidebar.multiselect("Saison(en)",
                                           default = [max(all_seasons)] if all_seasons else [])
 if not selected_seasons: selected_seasons = all_seasons
 
-df_quali_s = df_quali[df_quali["Saison"].isin(selected_seasons)]
-df_wins_s = df_wins[df_wins["Saison"].isin(selected_seasons)]
-df_dnf_s = df_dnf[df_dnf["Saison"].isin(selected_seasons)]
+df_quali = df_quali[df_quali["Saison"].isin(selected_seasons)]
+df_wins = df_wins[df_wins["Saison"].isin(selected_seasons)]
+df_dnf= df_dnf[df_dnf["Saison"].isin(selected_seasons)]
 
 
 
 st.sidebar.subheader("Teams auswählen")
-teams_in_selected_seasons = sorted(df_quali_s["Team"].unique())
+teams_in_selected_seasons = sorted(df_quali["Team"].unique())
 selected_teams = st.sidebar.multiselect("Team(s)", 
                                         options = teams_in_selected_seasons, 
                                         default = teams_in_selected_seasons)
 if not selected_teams: selected_teams = teams_in_selected_seasons
 
-df_quali_t = df_quali_s[df_quali_s["Team"].isin(selected_teams)]
-df_wins_t = df_wins_s[df_wins_s["Team"].isin(selected_teams)]
-df_dnf_t = df_dnf_s[df_dnf_s["Team"].isin(selected_teams)]
+df_quali = df_quali[df_quali["Team"].isin(selected_teams)]
+df_wins = df_wins[df_wins["Team"].isin(selected_teams)]
+df_dnf = df_dnf[df_dnf["Team"].isin(selected_teams)]
 
 
 
 st.sidebar.subheader("Fahrer auswählen")
-drivers_in_selected_teams = sorted(df_quali_t["Fahrer"].unique())
+drivers_in_selected_teams = sorted(df_quali["Fahrer"].unique())
 selected_drivers = st.sidebar.multiselect("Fahrer", 
                                           options = drivers_in_selected_teams,
                                           default = drivers_in_selected_teams)
 if not selected_drivers: selected_drivers = drivers_in_selected_teams
 
-final_df_quali = df_quali_t[df_quali_t["Fahrer"].isin(selected_drivers)]
-final_df_wins = df_wins_t[df_wins_t["Fahrer"].isin(selected_drivers)]
-final_df_dnf = df_dnf_t[df_dnf_t["Fahrer"].isin(selected_drivers)]
+final_df_quali = df_quali[df_quali["Fahrer"].isin(selected_drivers)]
+final_df_wins = df_wins[df_wins["Fahrer"].isin(selected_drivers)]
+final_df_dnf = df_dnf[df_dnf["Fahrer"].isin(selected_drivers)]
 
 
 
 
 
-# --- Dashboard ---
+# Dashboard
 st.title("🏎️ Interaktives Formel 1 Dashboard")
 st.markdown(f"Analyse für die Saison(en) **{", ".join(map(str, selected_seasons))}**.")
 st.info(f"Fokus auf **{len(selected_teams)} Team(s)** und **{len(selected_drivers)} Fahrer**.")
@@ -67,32 +67,26 @@ st.divider()
 
 
 
-# --- Kennzahlen ---
+#Kennzahlen 
 st.header("📈 Kennzahlen")
-if final_df_quali.empty and final_df_wins.empty and final_df_dnf.empty:
-    st.warning("Keine Daten für die aktuelle Filterauswahl verfügbar.")
-else:
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Gesamtsiege", final_df_wins.shape[0])
-    col2.metric("Motorausfälle", final_df_dnf.shape[0])
 
-    # KORREKTUR 1: Greife direkt auf die Spalte "Q3" zu, anstatt nach "Run" zu filtern.
-    q3_data = final_df_quali # Wir brauchen keine extra Filterzeile
-    avg_q3_time = q3_data["Q3"].mean() if not q3_data.empty else 0
-    col3.metric("Avg. Q3 Zeit", f"{avg_q3_time/1000:.3f}s" if pd.notna(avg_q3_time) and avg_q3_time > 0 else "N/A")
+col1, col2, col3 = st.columns(3)
+col1.metric("Gesamtsiege", final_df_wins.shape[0])
+col2.metric("Motorausfälle", final_df_dnf.shape[0])
+
+q3_data = final_df_quali 
+avg_q3_time = q3_data["Q3"].mean() if not q3_data.empty else 0
+col3.metric("Avg. Q3 Zeit", f"{avg_q3_time/1000:.3f}s" if pd.notna(avg_q3_time) and avg_q3_time > 0 else "N/A")
 
 st.divider()
 
 
 
-# --- Analysebereiche ---
+#  Analysebereiche
 st.header("📊 Detailanalysen")
 
-# --- Qualifying-Analyse ---
+# Qualifying-Analyse 
 with st.expander("🏆 Qualifying Analyse", expanded = True):
-    if final_df_quali.empty:
-        st.warning("Keine Qualifying-Daten für diese Auswahl.")
-    else:
         tab1, tab2 = st.tabs(["Zeiten pro Fahrer & Run", "Zeit vs. Startposition"])
         with tab1:
             df_q_melt = final_df_quali.melt(
@@ -125,11 +119,8 @@ with st.expander("🏆 Qualifying Analyse", expanded = True):
                              labels = {"Q3": "Zeit in Q3 (ms)", "Startplatz": "Startposition"})
             st.plotly_chart(fig, use_container_width = True)
 
-# --- Sieges-Analyse ---
+#Sieges-Analyse 
 with st.expander("🥇 Rennsiege Analyse", expanded = True):
-    if final_df_wins.empty:
-        st.warning("Keine Sieges-Daten für diese Auswahl.")
-    else:
         tab1, tab2, tab3, tab4 = st.tabs(["Nach Fahrer", "Nach Nationalität", "Nach Team", "Nach Alter"])
         with tab1:
             wins_by_driver = final_df_wins["Fahrer"].value_counts().reset_index()
@@ -166,27 +157,24 @@ with st.expander("🥇 Rennsiege Analyse", expanded = True):
                                template = "plotly_dark")
             st.plotly_chart(fig, use_container_width = True)
 
-# --- DNF-Analyse ---
+#DNF-Analyse
 with st.expander("🔧 Analyse der Technischen Ausfälle", expanded = True):
-    if final_df_dnf.empty:
-        st.warning("Keine Ausfall-Daten für diese Auswahl.")
-    else:
-        tab1, tab2 = st.tabs(["Nach Team & Saison", "Nach Fahrer"])
-        with tab1:
-            dnf_counts = final_df_dnf.groupby(["Saison", "Team"]).size().reset_index(name = "Anzahl")
-            fig = px.bar(dnf_counts, 
-                         x = "Saison", 
-                         y = "Anzahl", 
-                         color = "Team", 
-                         template = "plotly_dark", 
-                         title = "Motorausfälle pro Saison & Team")
-            st.plotly_chart(fig, use_container_width = True)
-        with tab2:
-            dnf_by_driver = final_df_dnf["Fahrer"].value_counts().reset_index()
-            fig = px.bar(dnf_by_driver, 
-                         y = "Fahrer", 
-                         x = "count", 
-                         orientation = "h", 
-                         template = "plotly_dark", 
-                         title = "Motorausfälle pro Fahrer")
-            st.plotly_chart(fig.update_layout(yaxis = {"categoryorder":"total ascending"}), use_container_width = True)
+    tab1, tab2 = st.tabs(["Nach Team & Saison", "Nach Fahrer"])
+    with tab1:
+        dnf_counts = final_df_dnf.groupby(["Saison", "Team"]).size().reset_index(name = "Anzahl")
+        fig = px.bar(dnf_counts, 
+                     x = "Saison", 
+                     y = "Anzahl", 
+                     color = "Team", 
+                     template = "plotly_dark", 
+                     title = "Motorausfälle pro Saison & Team")
+        st.plotly_chart(fig, use_container_width = True)
+    with tab2:
+        dnf_by_driver = final_df_dnf["Fahrer"].value_counts().reset_index()
+        fig = px.bar(dnf_by_driver, 
+                     y = "Fahrer", 
+                     x = "count", 
+                     orientation = "h", 
+                     template = "plotly_dark", 
+                     title = "Motorausfälle pro Fahrer")
+        st.plotly_chart(fig.update_layout(yaxis = {"categoryorder":"total ascending"}), use_container_width = True)
